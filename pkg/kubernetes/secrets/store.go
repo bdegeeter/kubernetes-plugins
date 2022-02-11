@@ -7,15 +7,15 @@ import (
 
 	"get.porter.sh/plugin/kubernetes/pkg/kubernetes/config"
 	k8s "get.porter.sh/plugin/kubernetes/pkg/kubernetes/helper"
-	portersecrets "get.porter.sh/porter/pkg/secrets"
+	portercontext "get.porter.sh/porter/pkg/context"
+	portersecrets "get.porter.sh/porter/pkg/secrets/plugins"
 	cnabsecrets "github.com/cnabio/cnab-go/secrets"
-	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/hashicorp/go-hclog"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
-var _ cnabsecrets.Store = &Store{}
+var _ portersecrets.SecretsPlugin = &Store{}
 
 const (
 	SecretSourceType = "secret"
@@ -25,19 +25,18 @@ const (
 // Store implements the backing store for secrets as kubernetes secrets.
 type Store struct {
 	logger    hclog.Logger
-	config    config.Config
 	hostStore cnabsecrets.Store
+	Secrets   map[string]map[string]string
+	*portercontext.Context
+	config    config.Config
 	clientSet *kubernetes.Clientset
 }
 
-func NewStore(cfg config.Config, l hclog.Logger) cnabsecrets.Store {
+func NewStore(c *portercontext.Context, cfg PluginConfig) *Store {
 	s := &Store{
-		config:    cfg,
-		logger:    l,
-		hostStore: &host.SecretStore{},
+		Secrets: make(map[string]map[string]string),
 	}
-
-	return portersecrets.NewSecretStore(s)
+	return s
 }
 
 func (s *Store) Connect() error {
@@ -74,4 +73,25 @@ func (s *Store) Resolve(keyName string, keyValue string) (string, error) {
 	}
 
 	return string(secret.Data[SecretDataKey]), nil
+}
+
+func (s *Store) Close() error {
+
+	/*
+		if s.clientSet != nil {
+			return nil
+		}
+
+		clientSet, namespace, err := k8s.GetClientSet(s.config.Namespace, s.logger)
+
+		if err != nil {
+			s.logger.Debug(fmt.Sprintf("Failed to get Kubernetes Client Set: %v", err))
+			return err
+		}
+
+		s.clientSet = clientSet
+		s.config.Namespace = *namespace
+	*/
+
+	return nil
 }

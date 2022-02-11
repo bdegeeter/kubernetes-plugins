@@ -1,16 +1,14 @@
 package storage
 
 import (
-	"os"
-
-	"get.porter.sh/plugin/kubernetes/pkg/kubernetes/config"
-	"get.porter.sh/porter/pkg/storage/crudstore"
+	"get.porter.sh/plugin/kubernetes/pkg/kubernetes/secrets"
+	portercontext "get.porter.sh/porter/pkg/context"
+	secretsplugin "get.porter.sh/porter/pkg/secrets/plugins"
+	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/cnabio/cnab-go/utils/crud"
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
 )
 
-const PluginInterface = crudstore.PluginInterface + ".kubernetes.storage"
+const PluginInterface = plugins.PluginInterface + ".kubernetes.storage"
 
 var _ crud.Store = &Plugin{}
 
@@ -20,17 +18,23 @@ type Plugin struct {
 	crud.Store
 }
 
-func NewPlugin(cfg config.Config) plugin.Plugin {
-	logger := hclog.New(&hclog.LoggerOptions{
-		Name:       PluginInterface,
-		Output:     os.Stderr,
-		Level:      hclog.Debug,
-		JSONFormat: true,
-	})
+func NewPlugin(cxt *portercontext.Context, pluginConfig interface{}) (secretsplugin.SecretsPlugin, error) {
+	cfg := secrets.PluginConfig{}
+	/*
+		logger := hclog.New(&hclog.LoggerOptions{
+			Name:       PluginInterface,
+			Output:     os.Stderr,
+			Level:      hclog.Debug,
+			JSONFormat: true,
+		})
+	*/
 
-	return &crudstore.Plugin{
-		Impl: &Plugin{
-			Store: NewStore(cfg, logger),
-		},
-	}
+	/*
+		return &plugins.Plugin{
+			Impl: &Plugin{
+				Store: NewStore(cfg, logger),
+			},
+		}
+	*/
+	return secrets.NewStore(cxt, cfg), nil
 }

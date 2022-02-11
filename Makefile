@@ -20,7 +20,7 @@ CLIENT_PLATFORM ?= $(shell go env GOOS)
 CLIENT_ARCH ?= $(shell go env GOARCH)
 SUPPORTED_PLATFORMS = linux darwin windows
 SUPPORTED_ARCHES = amd64
-TESTS = secret storage both
+TESTS = secret
 TIMEOUT = 240s
 
 ifeq ($(CLIENT_PLATFORM),windows)
@@ -65,10 +65,11 @@ test-integration: build bin/porter$(FILE_EXT) setup-tests clean-last-testrun
 	kubectl create namespace $(TEST_NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
 	kubectl create secret generic password --from-literal=credential=test --namespace $(TEST_NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
 	$(foreach TEST,$(TESTS), \
-			cp ./tests/integration/scripts/config-$(TEST)-ns.toml $$PORTER_HOME/config.toml; \
+			cp ./tests/integration/scripts/config-$(TEST)-ns.toml $$PORTER_HOME/config.toml; chmod 0600 $$PORTER_HOME/config.toml; \
 			cp ./tests/testdata/kubernetes-plugin-test-$(TEST).json $$PORTER_HOME/credentials/kubernetes-plugin-test.json; \
 			if [[ $(TEST) == "storage" ]]; then kubectl apply -f ./tests/testdata/credentials-storage.yaml -n $(TEST_NAMESPACE); fi; \
 			if [[ $(TEST) == "both" ]]; then kubectl apply -f ./tests/testdata/credentials-secret.yaml -n $(TEST_NAMESPACE); fi; \
+			./bin/porter storage fix-permissions; \
 			./bin/porter storage migrate; \
 			cd tests/testdata && ../../bin/porter install --cred kubernetes-plugin-test && cd ../..; \
 			if [[ $$(./bin/porter installations outputs show test_out -i kubernetes-plugin-test) != "test" ]]; then (exit 1); fi; \

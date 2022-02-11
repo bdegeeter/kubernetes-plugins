@@ -4,8 +4,6 @@ import (
 	"strings"
 
 	"get.porter.sh/plugin/kubernetes/pkg/kubernetes/config"
-	"get.porter.sh/plugin/kubernetes/pkg/kubernetes/secrets"
-	"get.porter.sh/plugin/kubernetes/pkg/kubernetes/storage"
 	"get.porter.sh/porter/pkg/plugins"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
@@ -69,8 +67,11 @@ func (p *Plugin) Run(args []string) {
 }
 
 func getPlugins(cfg config.Config) map[string]func() plugin.Plugin {
-	return map[string]func() plugin.Plugin{
-		secrets.PluginInterface: func() plugin.Plugin { return secrets.NewPlugin(cfg) },
-		storage.PluginInterface: func() plugin.Plugin { return storage.NewPlugin(cfg) },
-	}
+	/*
+		return map[string]func() plugin.Plugin{
+			secrets.PluginKey:       func() plugin.Plugin { return secrets.NewPlugin(cfg) },
+			storage.PluginInterface: func() plugin.Plugin { return storage.NewPlugin(cfg) },
+		}
+	*/
+	return nil
 }

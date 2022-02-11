@@ -3,3 +3,4 @@
 kind.config.yaml
 **/.cnab/**
 /tests/testdata/Dockerfile
+/vendor

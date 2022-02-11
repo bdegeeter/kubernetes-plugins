@@ -1,35 +1,33 @@
 package secrets
 
 import (
-	"os"
-
-	"get.porter.sh/plugin/kubernetes/pkg/kubernetes/config"
-	"get.porter.sh/porter/pkg/secrets"
+	portercontext "get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/secrets/plugins"
 	cnabsecrets "github.com/cnabio/cnab-go/secrets"
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
+	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
 )
 
-const PluginInterface = secrets.PluginInterface + ".kubernetes.secret"
+const PluginKey = plugins.PluginInterface + ".kubernetes.secret"
 
 var _ cnabsecrets.Store = &Plugin{}
+
+type PluginConfig struct {
+	KubeConfig string `mapstructure:"kubeconfig"`
+	Namespace  string `mapstructure:"namespace"`
+}
 
 // Plugin is the plugin wrapper for accessing secrets from Kubernetes Secrets.
 type Plugin struct {
 	cnabsecrets.Store
 }
 
-func NewPlugin(cfg config.Config) plugin.Plugin {
-	logger := hclog.New(&hclog.LoggerOptions{
-		Name:       PluginInterface,
-		Output:     os.Stderr,
-		Level:      hclog.Debug,
-		JSONFormat: true,
-	})
+func NewPlugin(cxt *portercontext.Context, pluginConfig interface{}) (plugins.SecretsPlugin, error) {
+	cfg := PluginConfig{}
 
-	return &secrets.Plugin{
-		Impl: &Plugin{
-			Store: NewStore(cfg, logger),
-		},
+	if err := mapstructure.Decode(pluginConfig, &cfg); err != nil {
+		return nil, errors.Wrapf(err, "error decoding %s plugin config from %#v", PluginKey, pluginConfig)
 	}
+	return NewStore(cxt, cfg), nil
+
 }
