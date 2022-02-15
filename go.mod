@@ -18,11 +18,11 @@ require (
 	github.com/cnabio/cnab-go v0.21.0
 	github.com/hashicorp/go-hclog v1.0.0
 	github.com/hashicorp/go-plugin v1.4.2
+	github.com/mitchellh/mapstructure v1.3.3
 	github.com/osteele/tuesday v1.0.3 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
-	go.mongodb.org/mongo-driver v1.8.3 // indirect
 	k8s.io/api v0.21.2
 	k8s.io/apimachinery v0.21.2
 	k8s.io/client-go v0.21.2
@@ -46,7 +46,6 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
 	github.com/go-logr/logr v0.4.0 // indirect
-	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gobuffalo/logger v1.0.4 // indirect
 	github.com/gobuffalo/packd v1.0.0 // indirect
 	github.com/gobuffalo/packr/v2 v2.8.1 // indirect
@@ -78,7 +77,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.7 // indirect
 	github.com/mholt/archiver/v3 v3.5.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
-	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/mmcdole/gofeed v1.0.0-beta2 // indirect
 	github.com/mmcdole/goxpp v0.0.0-20181012175147-0068e33feabf // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

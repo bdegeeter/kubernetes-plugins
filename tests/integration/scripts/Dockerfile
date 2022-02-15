@@ -1,10 +1,11 @@
 FROM golang
-RUN curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && \
-    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+ENV PORTER_VERSION v1.0.0-alpha.9
+RUN curl --silent -L https://cdn.porter.sh/${PORTER_VERSION}/install-linux.sh | bash && \
+    curl --silent -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
     install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 ENV PATH "$PATH:/root/.porter"
-RUN     mkdir -p /root/.porter/plugins/kubernetes  &&\
-        mkdir -p /root/.porter/credentials
+RUN mkdir -p /root/.porter/plugins/kubernetes  &&\
+    mkdir -p /root/.porter/credentials
 COPY / /app
 RUN install /app/bin/plugins/kubernetes/kubernetes /root/.porter/plugins/kubernetes/kubernetes
 WORKDIR /app

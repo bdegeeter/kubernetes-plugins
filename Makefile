@@ -2,7 +2,8 @@ PLUGIN = kubernetes
 PKG = get.porter.sh/plugin/$(PLUGIN)
 SHELL = /bin/bash
 
-PORTER_HOME = $(HOME)/.porter
+PORTER_VERSION=v1.0.0-alpha.9
+PORTER_HOME = ${PWD}/.porter
 
 COMMIT ?= $(shell git rev-parse --short HEAD)
 VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
@@ -60,20 +61,34 @@ test-unit: build
 	$(GO) test ./...;	
 test-integration: export CURRENT_CONTEXT=$(shell kubectl config current-context)
 test-integration: export PORTER_HOME=$(shell echo $${PWD}/bin)
+test-integration: export PORTER_CMD=$(shell echo $${PWD}/bin/porter)
 test-integration: build bin/porter$(FILE_EXT) setup-tests clean-last-testrun
 	kubectl config use-context $(KUBERNETES_CONTEXT)
 	kubectl create namespace $(TEST_NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
 	kubectl create secret generic password --from-literal=credential=test --namespace $(TEST_NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
 	$(foreach TEST,$(TESTS), \
-			cp ./tests/integration/scripts/config-$(TEST)-ns.toml $$PORTER_HOME/config.toml; chmod 0600 $$PORTER_HOME/config.toml; \
-			cp ./tests/testdata/kubernetes-plugin-test-$(TEST).json $$PORTER_HOME/credentials/kubernetes-plugin-test.json; \
-			if [[ $(TEST) == "storage" ]]; then kubectl apply -f ./tests/testdata/credentials-storage.yaml -n $(TEST_NAMESPACE); fi; \
-			if [[ $(TEST) == "both" ]]; then kubectl apply -f ./tests/testdata/credentials-secret.yaml -n $(TEST_NAMESPACE); fi; \
-			./bin/porter storage fix-permissions; \
-			./bin/porter storage migrate; \
-			cd tests/testdata && ../../bin/porter install --cred kubernetes-plugin-test && cd ../..; \
-			if [[ $$(./bin/porter installations outputs show test_out -i kubernetes-plugin-test) != "test" ]]; then (exit 1); fi; \
-			./bin/porter installations show kubernetes-plugin-test; \
+			echo; \
+			echo "============== TEST $(TEST) ================="; \
+			echo $$PORTER_HOME; \
+			echo $$PWD; \
+			cp ./tests/integration/scripts/config-$(TEST)-ns.toml \
+			  $$PORTER_HOME/config.toml; \
+			cp ./tests/testdata/kubernetes-plugin-test-$(TEST).json \
+			  $$PORTER_HOME/credentials/kubernetes-plugin-test.json; \
+			if [[ $(TEST) == "storage" ]]; then \
+			  kubectl apply -f ./tests/testdata/credentials-storage.yaml -n $(TEST_NAMESPACE); \
+			fi; \
+			if [[ $(TEST) == "both" ]]; then \
+			  kubectl apply -f ./tests/testdata/credentials-secret.yaml -n $(TEST_NAMESPACE); \
+			fi; \
+			$$PORTER_CMD storage migrate; \
+			cd tests/testdata && $$PORTER_CMD install --cred kubernetes-plugin-test && cd ../..; \
+			if [[ $$($$PORTER_CMD installations outputs show test_out -i kubernetes-plugin-test) != "test" ]]; \
+			  then (exit 1); \
+			fi; \
+			$$PORTER_CMD installations show kubernetes-plugin-test; \
+			echo "============== END OF TEST $(TEST) ================="; \
+			echo;
 		)
 	$(GO) test -tags=integration ./tests/integration/...;
 	kubectl delete namespace $(TEST_NAMESPACE)
@@ -106,10 +121,10 @@ publish: bin/porter$(FILE_EXT)
 
 bin/porter$(FILE_EXT): export PORTER_HOME=$(shell echo $${PWD}/bin)
 bin/porter$(FILE_EXT): 
-	curl --http1.1 -lvfsSLo bin/porter$(FILE_EXT) https://cdn.porter.sh/latest/porter-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT)
+	@curl --silent --http1.1 -lvfsSLo bin/porter$(FILE_EXT) https://cdn.porter.sh/$(PORTER_VERSION)/porter-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT)
 	chmod +x bin/porter$(FILE_EXT)
 
-setup-tests:
+setup-tests: | bin/porter$(FILE_EXT)
 	mkdir -p $$PORTER_HOME/credentials
 	cp tests/integration/scripts/config-*.toml $$PORTER_HOME
 	cp tests/testdata/kubernetes-plugin-test-*.json $$PORTER_HOME/credentials

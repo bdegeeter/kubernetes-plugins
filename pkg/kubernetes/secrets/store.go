@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"get.porter.sh/plugin/kubernetes/pkg/kubernetes/config"
 	k8s "get.porter.sh/plugin/kubernetes/pkg/kubernetes/helper"
 	portercontext "get.porter.sh/porter/pkg/context"
 	portersecrets "get.porter.sh/porter/pkg/secrets/plugins"
 	cnabsecrets "github.com/cnabio/cnab-go/secrets"
-	"github.com/hashicorp/go-hclog"
+	cnabhost "github.com/cnabio/cnab-go/secrets/host"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -24,17 +23,20 @@ const (
 
 // Store implements the backing store for secrets as kubernetes secrets.
 type Store struct {
-	logger    hclog.Logger
-	hostStore cnabsecrets.Store
-	Secrets   map[string]map[string]string
 	*portercontext.Context
-	config    config.Config
-	clientSet *kubernetes.Clientset
+	hostStore  cnabsecrets.Store
+	Secrets    map[string]map[string]string
+	namespace  string
+	kubeconfig string
+	clientSet  *kubernetes.Clientset
 }
 
 func NewStore(c *portercontext.Context, cfg PluginConfig) *Store {
+	namespace := cfg.Namespace
 	s := &Store{
-		Secrets: make(map[string]map[string]string),
+		Secrets:   make(map[string]map[string]string),
+		hostStore: &cnabhost.SecretStore{},
+		namespace: namespace,
 	}
 	return s
 }
@@ -44,16 +46,14 @@ func (s *Store) Connect() error {
 	if s.clientSet != nil {
 		return nil
 	}
-
-	clientSet, namespace, err := k8s.GetClientSet(s.config.Namespace, s.logger)
+	clientSet, namespace, err := k8s.GetClientSet(s.namespace)
 
 	if err != nil {
-		s.logger.Debug(fmt.Sprintf("Failed to get Kubernetes Client Set: %v", err))
 		return err
 	}
 
 	s.clientSet = clientSet
-	s.config.Namespace = *namespace
+	s.namespace = *namespace
 
 	return nil
 }
@@ -65,10 +65,9 @@ func (s *Store) Resolve(keyName string, keyValue string) (string, error) {
 
 	key := strings.ToLower(keyValue)
 
-	s.logger.Debug(fmt.Sprintf("Looking for key:%s", keyValue))
-	secret, err := s.clientSet.CoreV1().Secrets(s.config.Namespace).Get(context.Background(), key, metav1.GetOptions{})
+	secret, err := s.clientSet.CoreV1().Secrets(s.namespace).Get(context.Background(), key, metav1.GetOptions{})
 	if err != nil {
-		s.logger.Debug(fmt.Sprintf("Failed to Read secrets for key:%s %v", keyValue, err))
+		fmt.Printf("\nFailed to Read secrets for key: %s %v\n", keyValue, err)
 		return "", err
 	}
 
@@ -77,21 +76,18 @@ func (s *Store) Resolve(keyName string, keyValue string) (string, error) {
 
 func (s *Store) Close() error {
 
-	/*
-		if s.clientSet != nil {
-			return nil
-		}
+	if s.clientSet != nil {
+		return nil
+	}
 
-		clientSet, namespace, err := k8s.GetClientSet(s.config.Namespace, s.logger)
+	clientSet, namespace, err := k8s.GetClientSet(s.namespace)
 
-		if err != nil {
-			s.logger.Debug(fmt.Sprintf("Failed to get Kubernetes Client Set: %v", err))
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		s.clientSet = clientSet
-		s.config.Namespace = *namespace
-	*/
+	s.clientSet = clientSet
+	s.namespace = *namespace
 
 	return nil
 }
