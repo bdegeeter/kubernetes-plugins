@@ -17,9 +17,11 @@ func GetClientSet(namespace string) (*kubernetes.Clientset, *string, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	namespace, _, err = kubeConfig.Namespace()
-	if err != nil {
-		return nil, nil, err
+	if namespace == "" {
+		namespace, _, err = kubeConfig.Namespace()
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 	return clientSet, &namespace, nil
 }

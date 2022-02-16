@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	k8s "get.porter.sh/plugin/kubernetes/pkg/kubernetes/helper"
+	k8shelper "get.porter.sh/plugin/kubernetes/pkg/kubernetes/helper"
 	portercontext "get.porter.sh/porter/pkg/context"
 	portersecrets "get.porter.sh/porter/pkg/secrets/plugins"
 	cnabsecrets "github.com/cnabio/cnab-go/secrets"
@@ -46,7 +46,9 @@ func (s *Store) Connect() error {
 	if s.clientSet != nil {
 		return nil
 	}
-	clientSet, namespace, err := k8s.GetClientSet(s.namespace)
+	fmt.Printf("\nStore.Connect: pre-clientset namespace: %s\n", s.namespace)
+	clientSet, namespace, err := k8shelper.GetClientSet(s.namespace)
+	fmt.Printf("\nStore.Connect: post-clientset namespace: %s\n", *namespace)
 
 	if err != nil {
 		return err
@@ -60,14 +62,16 @@ func (s *Store) Connect() error {
 
 func (s *Store) Resolve(keyName string, keyValue string) (string, error) {
 	if strings.ToLower(keyName) != SecretSourceType {
+		fmt.Printf("\n\nhostStore.Resolve: '%s' '%s'\n\n", keyName, keyValue)
 		return s.hostStore.Resolve(keyName, keyValue)
 	}
 
 	key := strings.ToLower(keyValue)
 
+	fmt.Printf("\nclientSet.Get namespace: '%s' key: '%s'\n", s.namespace, key)
 	secret, err := s.clientSet.CoreV1().Secrets(s.namespace).Get(context.Background(), key, metav1.GetOptions{})
 	if err != nil {
-		fmt.Printf("\nFailed to Read secrets for key: %s %v\n", keyValue, err)
+		fmt.Printf("\n\nFailed to Read secrets for key:\t %s\n%s\n", keyValue, err)
 		return "", err
 	}
 
@@ -80,7 +84,7 @@ func (s *Store) Close() error {
 		return nil
 	}
 
-	clientSet, namespace, err := k8s.GetClientSet(s.namespace)
+	clientSet, namespace, err := k8shelper.GetClientSet(s.namespace)
 
 	if err != nil {
 		return err
