@@ -3,7 +3,11 @@ module get.porter.sh/plugin/kubernetes
 go 1.17
 
 replace (
-	github.com/hashicorp/go-plugin => github.com/carolynvs/go-plugin v1.0.1-acceptstdin
+	// See https://github.com/hashicorp/go-plugin/pull/127 and
+	// https://github.com/hashicorp/go-plugin/pull/163
+	// Also includes a branch we haven't PR'd yet: capture-yamux-logs
+	// Tagged from v1.4.0, the improved-configuration branch
+	github.com/hashicorp/go-plugin => github.com/getporter/go-plugin v1.4.0-improved-configuration.1
 
 	// expose-ast
 	// https://github.com/osteele/liquid/pull/59

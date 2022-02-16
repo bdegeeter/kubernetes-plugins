@@ -4,15 +4,17 @@ import (
 	"strings"
 
 	"get.porter.sh/plugin/kubernetes/pkg/kubernetes/config"
+	"get.porter.sh/plugin/kubernetes/pkg/kubernetes/secrets"
+	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/plugins"
 	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
+	hplugin "github.com/hashicorp/go-plugin"
 	"github.com/pkg/errors"
 )
 
 type RunOptions struct {
 	Key               string
-	selectedPlugin    plugin.Plugin
+	selectedPlugin    hplugin.Plugin
 	selectedInterface string
 }
 
@@ -66,12 +68,13 @@ func (p *Plugin) Run(args []string) {
 	plugins.Serve(opts.selectedInterface, opts.selectedPlugin)
 }
 
-func getPlugins(cfg config.Config) map[string]func() plugin.Plugin {
-	/*
-		return map[string]func() plugin.Plugin{
-			secrets.PluginKey:       func() plugin.Plugin { return secrets.NewPlugin(cfg) },
-			storage.PluginInterface: func() plugin.Plugin { return storage.NewPlugin(cfg) },
-		}
-	*/
-	return nil
+func getPlugins(cfg config.Config) map[string]func() hplugin.Plugin {
+	cxt := portercontext.New()
+	secretPlugin, _ := secrets.NewPlugin(cxt, cfg)
+
+	return map[string]func() hplugin.Plugin{
+		secrets.PluginKey: func() hplugin.Plugin {
+			return secretPlugin
+		},
+	}
 }
