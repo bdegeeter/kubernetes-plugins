@@ -39,7 +39,7 @@ build-for-debug:
 	$(GO) build -o $(BINDIR)/$(PLUGIN)$(FILE_EXT) ./cmd/$(PLUGIN)
 
 .PHONY: build
-build: clean
+build:
 	mkdir -p $(BINDIR)
 	$(GO) build -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(PLUGIN)$(FILE_EXT) ./cmd/$(PLUGIN)
 
@@ -103,8 +103,13 @@ setup-tests: | bin/porter$(FILE_EXT)
 	cp tests/integration/scripts/config-*.toml $$PORTER_HOME
 	cp tests/testdata/kubernetes-plugin-test-*.json $$PORTER_HOME/credentials
 	mkdir -p $$PORTER_HOME/runtimes
-	cp bin/porter $$PORTER_HOME/runtimes/porter-runtime
+	make install-linux-porter
 	./bin/porter mixin install exec
+
+install-linux-porter:
+	mkdir -p bin/runtimes
+	@curl --silent --http1.1 -lfsSLo bin/runtimes/porter-runtime https://cdn.porter.sh/$(PORTER_VERSION)/porter-linux-amd64$(FILE_EXT)
+	chmod +x bin/runtimes/porter-runtime
 
 install:
 	mkdir -p $(PORTER_HOME)/plugins/$(PLUGIN)

@@ -65,7 +65,7 @@ func (p *Plugin) Run(args []string) {
 		return
 	}
 
-	plugins.Serve(opts.selectedInterface, opts.selectedPlugin)
+	plugins.Serve(opts.selectedInterface, opts.selectedPlugin, 1)
 }
 
 func getPlugins(cfg config.Config) map[string]func() hplugin.Plugin {

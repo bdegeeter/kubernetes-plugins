@@ -1,16 +1,13 @@
 package secrets
 
 import (
-	"context"
-	"fmt"
-	"strings"
+	"log"
 
 	k8shelper "get.porter.sh/plugin/kubernetes/pkg/kubernetes/helper"
 	portercontext "get.porter.sh/porter/pkg/context"
 	portersecrets "get.porter.sh/porter/pkg/secrets/plugins"
 	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 	cnabhost "github.com/cnabio/cnab-go/secrets/host"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -46,9 +43,7 @@ func (s *Store) Connect() error {
 	if s.clientSet != nil {
 		return nil
 	}
-	fmt.Printf("\nStore.Connect: pre-clientset namespace: %s\n", s.namespace)
 	clientSet, namespace, err := k8shelper.GetClientSet(s.namespace)
-	fmt.Printf("\nStore.Connect: post-clientset namespace: %s\n", *namespace)
 
 	if err != nil {
 		return err
@@ -61,21 +56,21 @@ func (s *Store) Connect() error {
 }
 
 func (s *Store) Resolve(keyName string, keyValue string) (string, error) {
-	if strings.ToLower(keyName) != SecretSourceType {
-		fmt.Printf("\n\nhostStore.Resolve: '%s' '%s'\n\n", keyName, keyValue)
-		return s.hostStore.Resolve(keyName, keyValue)
-	}
+	log.Println("foo")
+	return "foo", nil
+	// if strings.ToLower(keyName) != SecretSourceType {
+	// 	return s.hostStore.Resolve(keyName, keyValue)
+	// }
 
-	key := strings.ToLower(keyValue)
+	// key := strings.ToLower(keyValue)
 
-	fmt.Printf("\nclientSet.Get namespace: '%s' key: '%s'\n", s.namespace, key)
-	secret, err := s.clientSet.CoreV1().Secrets(s.namespace).Get(context.Background(), key, metav1.GetOptions{})
-	if err != nil {
-		fmt.Printf("\n\nFailed to Read secrets for key:\t %s\n%s\n", keyValue, err)
-		return "", err
-	}
-
-	return string(secret.Data[SecretDataKey]), nil
+	// secret, err := s.clientSet.CoreV1().Secrets(s.namespace).Get(context.Background(), key, metav1.GetOptions{})
+	// if err != nil {
+	// 	return "foo", nil
+	// 	//return "", err
+	// }
+	// //return fmt.Sprintf("%s:%s:%s", s.namespace, keyValue, keyName), nil
+	// return string(secret.Data[SecretDataKey]), nil
 }
 
 func (s *Store) Close() error {
