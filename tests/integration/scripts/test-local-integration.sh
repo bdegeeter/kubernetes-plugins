@@ -11,12 +11,9 @@ kubectl create secret generic password --from-literal=credential=test --namespac
 TEST=secret
 echo
 echo "============== TEST ${TEST} ================="
-cp ./tests/integration/scripts/config-${TEST}-ns.toml \
-  $PORTER_HOME/config.toml; \
-cp ./tests/testdata/kubernetes-plugin-test-${TEST}.json \
-  $PORTER_HOME/credentials/kubernetes-plugin-test.json
+cp ./tests/integration/scripts/config-${TEST}-ns.toml $PORTER_HOME/config.toml
 kubectl apply -f ./tests/testdata/credentials-secret.yaml -n ${TEST_NAMESPACE}
-$PORTER_CMD storage migrate
+$PORTER_CMD credential apply ./tests/testdata/kubernetes-plugin-test-${TEST}.json
 cd tests/testdata && $PORTER_CMD install --cred kubernetes-plugin-test && cd ../..
 #TODO: add this test back
 #if [[ "$($PORTER_CMD installations outputs show test_out -i kubernetes-plugin-test)" != "test" ]]; then (exit 1); fi
